@@ -1,4 +1,4 @@
---Blackjack version 0.0.5--
+--Blackjack version 0.5--
 
 --Edited by Mavric on YouTube--
 
