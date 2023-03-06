@@ -1,6 +1,6 @@
---Blackjack version 0.0.6--
+--Blackjack version--
 
-vers = "0.0.6"
+vers = "0.0.5"
 local color = colors.black
 
 --Made by Mavric on YouTube--
