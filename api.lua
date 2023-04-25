@@ -1,20 +1,20 @@
---Blackjack version--
-
-vers = "0.0.5"
-local color = colors.black
+---Blackjack---
 
 --Made by Mavric on YouTube--
+
+---Settings---
+version = "0.6"
 local buttons = {
     {"Stand", 16, colors.black, 15, 21},
     {"Hit", 22, colors.gray, 21, 25},
     {"Double", 26, colors.red, 25, 32}
 }
-
 local button = {
     {"Stand", 19, colors.black, 18, 24},
     {"Hit", 25, colors.gray, 24, 28}
 }
 
+local color = 0
 local loop = true
 
 os.loadAPI("/blackjack/pinapi.lua")
@@ -24,7 +24,7 @@ function clear()
     term.clear()
     term.setCursorPos(1, 1)
     term.setTextColor(colors.black)
-    term.write("Blackjack OS ".. vers)
+    term.write("Blackjack OS ".. version)
     term.setCursorPos(1, 2)
     term.setTextColor(colors.yellow)
     term.write("Made By Mavric, Please Report Bugs")
@@ -58,7 +58,6 @@ function drawBack(x, y)
 end
 
 function drawBet(x, y, bal)
-    local bet = 0
     while true do
         clear()
         local pic = paintutils.loadImage("/blackjack/logo.nfp")
@@ -71,13 +70,13 @@ function drawBet(x, y, bal)
         term.setCursorPos(x, y + 9)
         term.setTextColor(1)
         term.write("Bet: ")
-        isbettt, bettt = pinapi.pinpad(x + 5, y + 9)
-        bettt = tonumber(bettt)
-        if (isbettt) then
-            if bettt ~= nil then
-                if bettt > 0 then
-                    if bettt < bal or bettt == bal then
-                        return bettt
+        local isBet, bet = pinapi.pinpad(x + 5, y + 9)
+        bet = tonumber(bet)
+        if (isBet) then
+            if bet ~= nil then
+                if bet > 0 then
+                    if bet < bal or bet == bal then
+                        return bet
                     end
                 end
             end
@@ -85,9 +84,9 @@ function drawBet(x, y, bal)
     end
 end
 
-function drawButton(dub)
+function drawButton(double)
     term.setTextColor(1)
-    if (dub) then
+    if (double) then
         for k, v in pairs(buttons) do
             term.setBackgroundColor(buttons[k][3])
             term.setCursorPos(buttons[k][2], 30)
@@ -102,24 +101,24 @@ function drawButton(dub)
     end
 end
 
-function checkPress(xx, yy, dubb)
-    if (dubb) then
-        if yy == 30 then
-            if xx > buttons[1][4] and xx < buttons[1][5] then
+function checkPress(x, y, double)
+    if (double) then
+        if y == 30 then
+            if x > buttons[1][4] and x < buttons[1][5] then
                 return true, 1
-            elseif xx > buttons[2][4] and xx < buttons[2][5] then
+            elseif x > buttons[2][4] and x < buttons[2][5] then
                 return true, 2
-            elseif xx > buttons[3][4] and xx < buttons[3][5] then
+            elseif x > buttons[3][4] and x < buttons[3][5] then
                 return true, 3
             else
                 return false
             end
         end
     else
-        if yy == 30 then
-            if xx > button[1][4] and xx < button[1][5] then
+        if y == 30 then
+            if x > button[1][4] and x < button[1][5] then
                 return true, 1
-            elseif xx > button[2][4] and xx < button[2][5] then
+            elseif x > button[2][4] and x < button[2][5] then
                 return true, 2
             else
                 return false
