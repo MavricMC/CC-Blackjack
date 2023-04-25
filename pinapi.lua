@@ -1,12 +1,12 @@
---Blackjack version 0.5--
+---Blackjack version 0.6---
 
 --Edited by Mavric on YouTube--
 
 --Made by Bloodmuffin on YoutTube--
-local input = ""
-local tig = ""
+
+---Settings---
 local keypad = {
---{num,xpos,ypos}
+--{num,xpos,ypos}--
     {1, 20, 20},
     {2, 25, 20},
     {3, 30, 20},
@@ -21,7 +21,11 @@ local keypad = {
     {11, 30, 26} --enter
 }
 
------FUNCTIONS-----
+local input = ""
+
+---Functions---
+
+--Checks to see if the x and y click is a button--
 function checkClick(t, x, y)
     for i,v in pairs(t) do
         local num, cx, cy = unpack(v)
@@ -32,6 +36,7 @@ function checkClick(t, x, y)
   return false
 end
 
+--Draws the number pressed--
 function numClick(num)
     if num ==  11 then
         return true, 0
@@ -45,8 +50,8 @@ function numClick(num)
 end
 
 --Main program--
+
 function pinpad(xx, yy)
-    tig = ""
     input = ""
     term.setBackgroundColor(colors.brown)
     term.setTextColor(1)
@@ -68,13 +73,15 @@ function pinpad(xx, yy)
     term.setTextColor(1)
     term.setCursorPos(xx, yy)
     while true do
+        --Checks to see if player has clicked on the screen--
         local event, button, x, y = os.pullEvent("monitor_touch")
+        --Checks if x and y pressed are a button--
         local validClick, num = checkClick(keypad, x, y)
         if (validClick) then
             local triger, but = numClick(num)
             if (triger) then
                 if but == 0 then
-                    tig = input
+                    local tig = input
                     input = ""
                     return true, tig
                 elseif but == 1 then
