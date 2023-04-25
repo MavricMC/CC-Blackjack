@@ -1,8 +1,9 @@
---Blackjack version 0.5--
+---Blackjack version 0.6---
 
 --Made by Mavric on YouTube--
 deck = {
-    {1, "A", "\3"}, --value, card letter/number, suit--
+--{value, char, suit}--
+    {1, "A", "\3"},
     {2, 2, "\3"},
     {3, 3, "\3"},
     {4, 4, "\3"},
