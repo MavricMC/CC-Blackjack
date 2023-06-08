@@ -3,7 +3,7 @@
 --Made by Mavric on YouTube--
 
 ---Settings---
-version = "0.6"
+version = "0.7"
 local buttons = {
     {"Stand", 16, colors.black, 15, 21},
     {"Hit", 22, colors.gray, 21, 25},
