@@ -1,4 +1,4 @@
----Blackjack version 0.6---
+---Blackjack version 0.7---
 
 --Made by Mavric--
 --Code on https://github.com/MavricMC/CC-Blackjack--
@@ -381,21 +381,26 @@ while true do
     while disk.isPresent(drive) == false do
         sleep(0.1)
     end
-    print(" ")
-    local bil = tonumber(disk.getLabel(drive))
-    local win, bat = runGame(bil)
-    term.setCursorPos(16, 30)
-    term.setBackgroundColor(colors.green)
-    if (win) then
-        term.setTextColor(colors.red)
-        term.write("You Win: ")
-        term.write(tostring(bat))
-        --Add winnings to their card--
-        disk.setLabel(drive, tostring(bil + bat))
-    else
-        term.setTextColor(colors.black)
-        term.write("You Lose: ")
-        term.write(tostring(bat))
+    --checks it was a disk inserted--
+    if (disk.getID(drive)) then
+        --checks disks label is a number--
+        if (tonumber(disk.getLabel(drive))) then
+            local bil = tonumber(disk.getLabel(drive))
+            local win, bat = runGame(bil)
+            term.setCursorPos(16, 30)
+            term.setBackgroundColor(colors.green)
+            if (win) then
+                term.setTextColor(colors.red)
+                term.write("You Win: ")
+                term.write(tostring(bat))
+                --Add winnings to their card--
+                disk.setLabel(drive, tostring(bil + bat))
+            else
+                term.setTextColor(colors.black)
+                term.write("You Lose: ")
+                term.write(tostring(bat))
+            end
+        end
     end
     disk.eject(drive)
     sleep(1)
