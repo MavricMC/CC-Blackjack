@@ -1,4 +1,4 @@
----Blackjack version 0.7---
+---Blackjack version 0.8---
 
 --Made by Mavric on YouTube--
 deck = {
