@@ -8,4 +8,4 @@ A casino style blackjack game for computer craft fork CC:Tweaked a minecraft mod
 
 # How to install.
 
-To install this github repository in CC-Tweaked you must first run `pastebin run dgrAh4CY` to install gitGet then run `gitGet install MavricMC/CC-Blackjack (put a version number here if you dont want to install latest)`.
+To install this github repository in CC-Tweaked you must first run `pastebin run dgrAh4CY` to install gitGet then run `gitGet install MavricMC/CC-Blackjack`.
