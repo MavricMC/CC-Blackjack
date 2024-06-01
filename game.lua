@@ -2,7 +2,7 @@
 
 --Made by Mavric--
 --Code on https://github.com/MavricMC/CC-Blackjack--
----Pinpad remade from the ground up but thanks to blood muffin for the original that got me started on this project---
+---Pinpad remade from the ground up but thanks to blood muffin for the original that got me started with his---
 
 ---Settings---
 local screen = "left"
