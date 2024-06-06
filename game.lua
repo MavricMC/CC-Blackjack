@@ -636,5 +636,5 @@ while true do
         end
     end
     disk.eject(drive)
-    sleep(1)
+    sleep(2)
 end
