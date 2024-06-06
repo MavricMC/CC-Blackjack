@@ -7,7 +7,7 @@
 ---Settings---
 local screen = "left"
 local drive = "bottom"
-local version = "0.7"
+local version = "0.8"
 local background = colors.green
 term.redirect(peripheral.wrap(screen)) --Connect and clear screen--
 term.clear()
