@@ -1,6 +1,6 @@
 blackjack
 MavricMC/CC-Blackjack/main/game.lua
-blackjack/game.lua
+startup.lua
 MavricMC/CC-Blackjack/main/cards.lua
 blackjack/cards.lua
 MavricMC/CC-Blackjack/main/logo.nfp
