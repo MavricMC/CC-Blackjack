@@ -1,16 +1,20 @@
----Blackjack version 0.8---
+---Blackjack version 0.9---
+local version = "0.9"
 
 --Made by Mavric--
 --Code on https://github.com/MavricMC/CC-Blackjack--
----Pinpad remade from the ground up but thanks to blood muffin for the original that got me started with his---
+
+os.pullEvent = os.pullEventRaw --Prevent program termination
+settings.set("shell.allow_disk_startup", false)
+settings.save()
 
 ---Settings---
+local atm = "blackjack_1"
+local bankSide = "top"
+local server = 0
 local screen = "left"
 local drive = "bottom"
-local version = "0.8"
 local background = colors.green
-term.redirect(peripheral.wrap(screen)) --Connect and clear screen--
-term.clear()
 --Card X cords--
 local xCords = {
     {23},
@@ -39,91 +43,70 @@ local pinpad = {
 --Game Buttons--
 local buttons = {
 --{text, xWritePos, color, x cord each side of the button}--
-    {"Stand", 16, colors.black,},
-    {"Hit", 22, colors.gray},
-    {"Double", 26, colors.red}
+    {"Stand", 18, colors.black,},
+    {"Hit", 24, colors.gray},
+    {"Double", 28, colors.red}
 }
 --Without double--
 local button = {
-    {"Stand", 19, colors.black, 18, 24},
-    {"Hit", 25, colors.gray, 24, 28}
+    {"Stand", 20, colors.black, 18, 24},
+    {"Hit", 26, colors.gray, 24, 28}
 }
 
 local xOffset = 2
 local xOffsetDealer = 2
 local double = false
 local doubled = false
+local betting = {}
+local text = {}
+rednet.open(bankSide)
+local m = peripheral.wrap(screen)
 
-
----PinpadFunctions---
-
---Checks to see if x and y cords click match with button--
-function checkButton(xPressed, yPressed)
-    for k, v in pairs(pinpad) do
-        if yPressed == v[3] then
-            if xPressed >= v[2] and xPressed <= (v[2] + 2) then
-                return true, v[1]
-            end
-        end
+--Bank functions--
+function balance(account, ATM, pin)
+    local msg = {"bal", account, ATM, pin}
+    rednet.send(server, msg, "banking")
+    local send, mes, pro = rednet.receive("banking")
+    if mes[1] == "balR" then
+        return mes[2], mes[3]
     end
-    return false
+    return false, "oof"
 end
 
---Main pinpad function--
-function runPinpad(xDraw, yDraw)
-    --Resets everything--
-    local pressed = ""
-    term.setBackgroundColor(colors.brown)
-    term.setTextColor(1)--White--
-    --Draws the button as the number or a letter for the controls--
-    for k, v in pairs(pinpad) do
-        term.setCursorPos(v[2], v[3])
-        if v[1] == "10" then
-            --Draws the clear button red with a C--
-            term.setBackgroundColor(colors.red)
-            term.write(" " .. "C" .. " ")
-        elseif v[1] == "11" then
-            --Draws the clear button green with a E--
-            term.setBackgroundColor(colors.green)
-            term.write(" " .. "E" .. " ")
-        else
-            --Draws the number button brown with the number--
-            term.setBackgroundColor(colors.brown)
-            term.write(" " .. v[1] .. " ")
-        end
+function deposit(account, amount, ATM, pin)
+    local msg = {"dep", account, amount, ATM, pin}
+    rednet.send(server, msg, "banking")
+    local send, mes, pro = rednet.receive("banking")
+    if mes[1] == "depR" then
+        return mes[2], mes[3]
     end
-    term.setBackgroundColor(background)
-    term.setTextColor(1)
-    term.setCursorPos(xDraw, yDraw)
-    --Checks click until clear or enter pressed--
-    while true do
-        --Sets up event listener for a press on the screen--
-        local event, button, xp, yp = os.pullEvent("monitor_touch")
-        --Uses checkButton to check the x and y against pinpad--
-        local isClick, numClicked = checkButton(xp, yp)
-        --Run if a button was clicked--
-        if (isClick) then
-            if numClicked == "10" then
-                --If clicked clear return false--
-                return false
-            elseif numClicked == "11" then
-                --If clicked enter return true and the string of numbers entered--
-                return true, pressed
-            else
-                --If a number pressed add that number to the string of numbers pressed--
-                pressed = pressed.. numClicked
-                --Write the number to the screen so the player knows what they pressed--
-                term.write(numClicked)
-            end
-        end
-    end
+    return false, "oof"
 end
 
+function withdraw(account, amount, ATM, pin)
+    local msg = {"wit", account, amount, ATM, pin}
+    rednet.send(server, msg, "banking")
+    local send, mes, pro = rednet.receive("banking")
+    if mes[1] == "witR" then
+        return mes[2], mes[3], amount
+    end
+    return false, "oof"
+end
 
----ApiFunctions---
+function transfer(account, account2, amount, ATM, pin)
+    local msg = {"tra", account, account2, amount, ATM, pin}
+    rednet.send(server, msg, "banking")
+    local send, mes, pro = rednet.receive("banking")
+    if mes[1] == "traR" then
+        return mes[2], mes[3]
+    end
+    return false, "oof"
+end
+
+---Api functions---
 
 --Resets the screen--
-function clear()
+function clear(insert)
     --Clears the screen--
     term.setBackgroundColor(background)
     term.clear()
@@ -134,6 +117,13 @@ function clear()
     term.setCursorPos(1, 2)
     term.setTextColor(colors.yellow)
     term.write("Made By Mavric, Please Report Bugs")
+    if (insert) then
+        local pic = paintutils.loadImage("/blackjack/logo.nfp")
+        paintutils.drawImage(pic, 20, 14)
+        term.setBackgroundColour(colours.green)
+        term.setCursorPos(17, 23)
+        term.write("Please insert card")
+    end
 end
 
 --Draw a card--
@@ -164,42 +154,6 @@ end
 function drawBack(x, y)
     local pic = paintutils.loadImage("/blackjack/cardBack.nfp")
     paintutils.drawImage(pic, x, y)
-end
-
---Draw and prosses the betting prosses--
-function drawBet(x, y, bal)
-    --Repeat until you get a valid bet amount--
-    while true do
-        clear()
-        --Draw the logo--
-        local pic = paintutils.loadImage("/blackjack/logo.nfp")
-        paintutils.drawImage(pic, x, y)
-        --Draw the players balance--
-        term.setBackgroundColor(background)
-        term.setTextColor(colors.lime)
-        term.setCursorPos(1, 3)
-        term.write("$")
-        term.write(tostring(bal))
-        --Draw text entry bar--
-        term.setCursorPos(x, y + 9)
-        term.setTextColor(1)
-        term.write("Bet: ")
-        --Run pinpad function--
-        local isBet, bet = runPinpad(x + 5, y + 9)
-        bet = tonumber(bet)
-        --Check they pressed enter, the bet was not nil, the bet was more then 0, and the player has the balance to place the bet--
-        if (isBet) then
-            if bet ~= nil then
-                if bet > 0 then
-                    if bet <= bal then
-                        --If all true return how much they bet in int form--
-                        return bet
-                    end
-                end
-            end
-        end
-        --If any are false restart the prosses--
-    end
 end
 
 function drawButton(double)
@@ -251,6 +205,68 @@ function checkPress(x, y, double)
             end
         end
     end
+end
+
+
+--Betting functions from MP--
+function checkX(x, y)
+    if x == 49 and y == 17 then
+        return true
+    else
+        return false
+    end
+end
+
+function drawX()
+    term.setTextColor(colors.white)
+    term.setBackgroundColor(colours.red)
+    term.setCursorPos(49, 17)
+    term.write("X")
+end
+
+function pinpad(key)
+    if (tonumber(key)) then
+        if key == 259 then
+            return true, 10
+        elseif key == 257 or key == 335 then
+            return true, 11
+        elseif tonumber(key) >= 0 and tonumber(key) <= 9 then
+            return true, tonumber(key)
+        end
+    end
+    return false
+end
+
+function clearSmall(insert)
+    clear(false)
+    local pic = paintutils.loadImage("/blackjack/logo.nfp")
+    paintutils.drawImage(pic, 20, 4)
+    if (insert) then
+        term.setBackgroundColor(colours.green)
+        term.setCursorPos(17, 13)
+        term.write("Please insert card")
+    end
+end
+
+function drawBet(PIN, number)
+    clearSmall(false)
+    term.setBackgroundColor(colours.green)
+    term.setTextColor(colours.lime)
+    term.setCursorPos(1, 3)
+    if (PIN) then
+        term.write("ID:")
+    else
+        term.write("$")
+    end
+    term.write(number)
+    term.setCursorPos(20, 13)
+    term.setTextColor(1)
+    if (PIN) then
+        term.write("PIN:")
+    else
+        term.write("BET:")
+    end
+    drawX()
 end
 
 
@@ -320,7 +336,7 @@ function hit()
     if xOffset < 6 then
         xOffset = xOffset + 1
         --Preps screen--
-        clear()
+        clear(false)
         drawButton(double)
         --Draws dealers cards--
         drawCard(xCords[2][1], 5, cards.dealer[1][2], cards.dealer[1][3])
@@ -352,7 +368,7 @@ end
 function dealerHit()
     if xOffsetDealer < 6 then
         --Preps screen--
-        clear()
+        clear(false)
         xOffsetDealer = xOffsetDealer + 1
         --Picks a random card from the deck--
         local rand = math.random(1, table.maxn(cards.deck))
@@ -382,7 +398,7 @@ end
 
 --Draws players and dealers cards without hiden card--
 function endGame()
-    clear()
+    clear(false)
     local count = 1
     for k, v in pairs(cards.dealer) do
         drawCard(xCords[xOffsetDealer][count], 5, cards.dealer[k][2], cards.dealer[k][3])
@@ -395,20 +411,161 @@ function endGame()
     end
 end
 
-function runGame(balance)
+function runGame()
     ---Setup---
     os.loadAPI("/blackjack/cards.lua")
     xOffset = 2
     xOffsetDealer = 2
     double = false
     doubled = false
-    clear()
+    term.redirect(m) --Connect and clear large screen--
+    clear(true)
+    term.redirect(term.native()) --Connect and clear small screen--
+    clearSmall(true)
+
+    --Betting setup--
+    betting = {false, false, 0, 0} --is betting, is pin, id, balance--
+    text = {"", ""} --bet amount, pin--
 
     --Betting--
-    local bet = drawBet(20, 5, balance)
-    disk.setLabel(drive, tostring(balance - bet))
+    local loop = true
+    while loop do
+        local event = {os.pullEvent()}
+        if event[1] == "terminate" then
+            if (redstone.getInput("back")) then
+                error("You found the lever didnt you")
+            else
+                print("Did you think Im that stupid?")
+            end
+        elseif event[1] == "disk" then
+            local id = disk.getID(drive)
+            disk.eject(drive)
+            if id ~= nil then
+                if betting[1] == false then
+                    drawBet(true, id)
+                    betting[1] = true
+                    betting[3] = id
+                end
+            end
+        elseif event[1] == "mouse_click" then
+            if (betting[1]) then
+                if (checkX(event[3], event[4])) then
+                    betting[1] = false
+                    betting[2] = false
+                    betting[3] = 0
+                    betting[4] = 0
+                    text[1] = ""
+                    text[2] = ""
+                    clearSmall(true)
+                end
+            end
+        elseif event[1] == "char" or event[1] == "key" then
+            if (betting[1]) then
+                if (betting[2]) then
+                    local isKey, keyNum = pinpad(event[2])
+                    if (isKey) then
+                        if keyNum == 10 then
+                            if string.len(text[1]) > 0 then
+                                text[1] = string.sub(text[1], 1, string.len(text[1]) - 1)
+                                term.setBackgroundColor(colours.green)
+                                term.setTextColor(1)
+                                term.clearLine(13)
+                                term.setCursorPos(20, 13)
+                                term.write("BET: ".. text[1])
+                            end
+                        elseif keyNum == 11 then
+                            if string.len(text[1]) < 6 then
+                                if text[1] ~= "" then
+                                    if (betting[4] >= tonumber(text[1]) and tonumber(text[1]) ~= 0) then
+                                        local suc, res = withdraw(betting[3], tonumber(text[1]), atm, text[2])
+                                        clearSmall(false)
+                                        term.setBackgroundColor(colours.green)
+                                        term.setCursorPos(11, 13)
+                                        if (suc) then
+                                            term.write("Your bet of $".. text[1].. " has been set")
+                                            loop = false
+                                        else
+                                            term.write("Error: ".. res)
+                                        end
+                                    else
+                                        clearSmall(false)
+                                        term.setBackgroundColor(colours.green)
+                                        term.setCursorPos(11, 13)
+                                        if (tonumber(text[1]) == 0) then
+                                            term.write("Must be more than zero!")
+                                        else
+                                            term.write("Must be enough money in your account!")
+                                        end
+                                        betting[1] = false
+                                        betting[2] = false
+                                        betting[3] = 0
+                                        betting[4] = 0
+                                        text[1] = ""
+                                        text[2] = ""
+                                        sleep(3)
+                                        clearSmall(true)
+                                    end
+                                end
+                            end
+                        elseif keyNum >= 0 and keyNum <= 9 then
+                            if string.len(text[1]) < 5 then
+                                text[1] = text[1].. keyNum
+                                term.setBackgroundColor(colours.green)
+                                term.setTextColor(1)
+                                term.setCursorPos(24 + string.len(text[1]), 13)
+                                term.write(keyNum)
+                            end
+                        end
+                    end
+                else
+                    local isKey, keyNum = pinpad(event[2])
+                    if (isKey) then
+                        if keyNum == 10 then
+                            if string.len(text[2]) > 0 then
+                                text[2] = string.sub(text[2], 1, string.len(text[2]) - 1)
+                                term.setBackgroundColor(colours.green)
+                                term.setTextColor(1)
+                                term.clearLine(13)
+                                term.setCursorPos(20, 13)
+                                term.write("PIN: ".. string.sub("****", 1, string.len(text[2])))
+                            end
+                        elseif keyNum == 11 then
+                            if string.len(text[2]) == 5 then
+                                local suc, res = balance(betting[3], atm, text[2])
+                                if (suc) then
+                                    betting[4] = tonumber(res)
+                                    betting[2] = true
+                                    drawBet(false, res)
+                                else
+                                    betting[1] = false
+                                    betting[3] = 0
+                                    text[2] = ""
+                                    clearSmall(false)
+                                    term.setBackgroundColor(colours.green)
+                                    term.setCursorPos(11, 13)
+                                    term.write(res)
+                                    sleep(3)
+                                    clearSmall(true)
+                                end
+                            end
+                        elseif keyNum >= 0 and keyNum <= 9 then
+                            if string.len(text[2]) < 5 then
+                                text[2] = text[2].. keyNum
+                                term.setBackgroundColor(colours.green)
+                                term.setTextColor(1)
+                                term.setCursorPos(24 + string.len(text[2]), 13)
+                                term.write("*")
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    term.redirect(m) --Connect large screen--
+    clear(false)
     --Get players cards--
-    clear()
     local rand = math.random(1, table.maxn(cards.deck))
     local card = cards.deck[rand]
     table.remove(cards.deck, rand)
@@ -448,12 +605,12 @@ function runGame(balance)
     --If the dealer of player has 21 they win--
     if (dealerTotal == 21) then
         drawCard(xCords[2][2], 5, cards.dealer[2][2], cards.dealer[2][3])
-        return false, bet
+        return false, tonumber(text[1])
     elseif (total == 21) then
-        return true, bet
+        return true, tonumber(text[1])
     end
     
-    if bet + bet > balance then
+    if (2 * tonumber(text[1])) > betting[4] then
         drawButton(false)
         double = false
     else
@@ -464,57 +621,70 @@ function runGame(balance)
     ---Main code---
     local success = true
     while (success) do
-        --Checks to see if player has clicked on the screen--
-        local event, perph, xp, yp = os.pullEvent("monitor_touch")
-        --Checks if x and y pressed are a button--
-        local pres, butt = checkPress(xp, yp, double)
-        if (pres) then
-            if butt == 1 then
-                --If they pressed stand it exits the loop--
-                success = false
-            elseif butt == 2 then
-                --If they pressed hit they cant use double anymore--
-                double = false
-                --Gets they player another card
-                local full = hit()
-                if (full) then
-                    --If the player had 6 cards when they, hit they get 1 more card--
-                    total = getTotal(false)
-                    local rand = math.random(1, table.maxn(cards.deck))
-                    drawCard(xCords[1][1], 13, cards.deck[rand][2], cards.deck[rand][3])
-                    total = total + cards.deck[rand][1]
-                    --If they dont go bust they win--
-                    if total > 21 then
-                        return false, bet
-                    else
-                        return true, bet
-                    end
-                else
-                    --Check total with new card to see if they go bust--
-                    total = getTotal(false)
-                    if total > 21 then
-                        --If they go bust they lose--
-                        endGame()
-                        return false, bet
-                    end
-                end
-            elseif butt == 3 then
-                if (double) then
-                    --If they pressed double and double is an option they get one more card--
-                    hit()
-                    
-                    --Check total with new card to see if they go bust--
-                    total = getTotal(false)
-                    if total > 21 then
-                        --If they go bust they lose--
-                        endGame()
-                        local winnings = bet + bet
-                        return false, winnings
-                    end
-                    
-                    --If they dont go bust it exits the loop and their bet is doubled--
-                    doubled = true
+        local event = {os.pullEvent()}
+        if event[1] == "terminate" then
+            if (redstone.getInput("back")) then
+                error("You found the lever didnt you")
+            else
+                print("Did you think Im that stupid?")
+            end
+        elseif event[1] == "monitor_touch" then
+            --Checks to see if player has clicked on the screen--
+            --Checks if x and y pressed are a button--
+            local pres, butt = checkPress(event[3], event[4], double)
+            if (pres) then
+                if butt == 1 then
+                    --If they pressed stand it exits the loop--
                     success = false
+                elseif butt == 2 then
+                    --If they pressed hit they cant use double anymore--
+                    double = false
+                    --Gets they player another card
+                    local full = hit()
+                    if (full) then
+                        --If the player had 6 cards when they, hit they get 1 more card--
+                        total = getTotal(false)
+                        local rand = math.random(1, table.maxn(cards.deck))
+                        drawCard(xCords[1][1], 13, cards.deck[rand][2], cards.deck[rand][3])
+                        total = total + cards.deck[rand][1]
+                        --If they dont go bust they win--
+                        if total > 21 then
+                            return false, tonumber(text[1])
+                        else
+                            return true, tonumber(text[1])
+                        end
+                    else
+                        --Check total with new card to see if they go bust--
+                        total = getTotal(false)
+                        if total > 21 then
+                            --If they go bust they lose--
+                            endGame()
+                            return false, tonumber(text[1])
+                        end
+                    end
+                elseif butt == 3 then
+                    if (double) then
+                        --If they pressed double and double is an option they get one more card--
+                        local suc, res = withdraw(betting[3], tonumber(text[1]), atm, text[2])
+                        if (suc) then
+                            hit()
+                            
+                            --Check total with new card to see if they go bust--
+                            total = getTotal(false)
+                            if total > 21 then
+                                --If they go bust they lose--
+                                endGame()
+                                local winnings = (2 * tonumber(text[1]))
+                                return false, winnings
+                            end
+                            
+                            --If they dont go bust it exits the loop and their bet is doubled--
+                            doubled = true
+                            success = false
+                        else
+                            term.write("Error: ".. res)
+                        end
+                    end
                 end
             end
         end
@@ -522,7 +692,7 @@ function runGame(balance)
 
 
     --Stand--
-    clear()
+    clear(false)
     count = 1
     for k, v in pairs(cards.dealer) do
         drawCard(xCords[2][count], 5, cards.dealer[k][2], cards.dealer[k][3])
@@ -544,20 +714,20 @@ function runGame(balance)
                 --It works out the winnings--
                 if (doubled) then
                     --Doubles the bet if they doubled--
-                    local winnings = bet + bet
+                    local winnings = (2 * tonumber(text[1]))
                     return true, winnings
                 else
-                    return true, bet
+                    return true, tonumber(text[1])
                 end
             else
                 --Returns false if the dealer doesn't goes bust--
                 --It works out the winnings--
                 if (doubled) then
                     --Doubles the bet if they doubled--
-                    local winnings = bet + bet
+                    local winnings = (2 * tonumber(text[1]))
                     return false, winnings
                 else
-                    return false, bet
+                    return false, tonumber(text[1])
                 end
             end
         else
@@ -569,10 +739,10 @@ function runGame(balance)
                 --It works out the winnings--
                 if (doubled) then
                     --Doubles the bet if they doubled--
-                    local winnings = bet + bet
+                    local winnings = (2 * tonumber(text[1]))
                     return true, winnings
                 else
-                    return true, bet
+                    return true, tonumber(text[1])
                 end
             end
         end
@@ -585,20 +755,20 @@ function runGame(balance)
         endGame()
         if (doubled) then
             --Doubles the bet if they doubled--
-            local winnings = bet + bet
+            local winnings = (2 * tonumber(text[1]))
             return false, winnings
         else
-            return false, bet
+            return false, tonumber(text[1])
         end
     elseif total > dealerTotal then
         --Player has more than dealer so they win--
         endGame()
         if (doubled) then
             --Doubles the bet if they doubled--
-            local winnings = bet + bet
+            local winnings = (2 * tonumber(text[1]))
             return true, winnings
         else
-            return true, bet
+            return true, tonumber(text[1])
         end
     elseif total == dealerTotal then
         --They have the same score so its a push--
@@ -611,30 +781,26 @@ end
 
 
 while true do
-    while disk.isPresent(drive) == false do
-        sleep(0.1)
-    end
-    --checks it was a disk inserted--
-    if (disk.getID(drive)) then
-        --checks disks label is a number--
-        if (tonumber(disk.getLabel(drive))) then
-            local bil = tonumber(disk.getLabel(drive))
-            local win, bat = runGame(bil)
-            term.setCursorPos(16, 30)
-            term.setBackgroundColor(background)
-            if (win) then
-                term.setTextColor(colors.red)
-                term.write("You Win: ")
-                term.write(tostring(bat))
-                --Add winnings to their card--
-                disk.setLabel(drive, tostring(bil + bat))
+    local win, bat = runGame()
+    term.setBackgroundColor(background)
+    if (win) then
+        term.setCursorPos(12, 30)
+        term.setTextColor(colors.red)
+        if bat ~= 0 then
+            --Add winnings to their card--
+            local suc, res = deposit(betting[3], bat, atm, text[2])
+            if (suc) then
+                term.write("Deposited your winings of: ".. bat)
             else
-                term.setTextColor(colors.black)
-                term.write("You Lose: ")
-                term.write(tostring(bat))
+                term.write("Error: ".. res)
             end
+        else
+            term.write("Push")
         end
+    else
+        term.setCursorPos(21, 30)
+        term.setTextColor(colors.black)
+        term.write("You Lost")
     end
-    disk.eject(drive)
-    sleep(2)
+    sleep(3)
 end
