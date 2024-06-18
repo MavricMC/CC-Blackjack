@@ -607,7 +607,8 @@ function runGame()
         drawCard(xCords[2][2], 5, cards.dealer[2][2], cards.dealer[2][3])
         return false, tonumber(text[1])
     elseif (total == 21) then
-        return true, tonumber(text[1])
+	local winnings = (2 * tonumber(text[1]))
+        return true, winnings
     end
     
     if (2 * tonumber(text[1])) > betting[4] then
@@ -651,7 +652,8 @@ function runGame()
                         if total > 21 then
                             return false, tonumber(text[1])
                         else
-                            return true, tonumber(text[1])
+			    local winnings = (2 * tonumber(text[1]))
+                            return true, winnings
                         end
                     else
                         --Check total with new card to see if they go bust--
@@ -714,10 +716,11 @@ function runGame()
                 --It works out the winnings--
                 if (doubled) then
                     --Doubles the bet if they doubled--
-                    local winnings = (2 * tonumber(text[1]))
+                    local winnings = (4 * tonumber(text[1]))
                     return true, winnings
                 else
-                    return true, tonumber(text[1])
+                    local winnings = (2 * tonumber(text[1]))
+                    return true, winnings
                 end
             else
                 --Returns false if the dealer doesn't goes bust--
@@ -739,10 +742,11 @@ function runGame()
                 --It works out the winnings--
                 if (doubled) then
                     --Doubles the bet if they doubled--
-                    local winnings = (2 * tonumber(text[1]))
+                    local winnings = (4 * tonumber(text[1]))
                     return true, winnings
                 else
-                    return true, tonumber(text[1])
+                    local winnings = (2 * tonumber(text[1]))
+                    return true, winnings
                 end
             end
         end
@@ -754,7 +758,6 @@ function runGame()
         --Player has less than dealer so they loss--
         endGame()
         if (doubled) then
-            --Doubles the bet if they doubled--
             local winnings = (2 * tonumber(text[1]))
             return false, winnings
         else
@@ -765,10 +768,11 @@ function runGame()
         endGame()
         if (doubled) then
             --Doubles the bet if they doubled--
-            local winnings = (2 * tonumber(text[1]))
+            local winnings = (4 * tonumber(text[1]))
             return true, winnings
         else
-            return true, tonumber(text[1])
+            local winnings = (2 * tonumber(text[1]))
+            return true, winnings
         end
     elseif total == dealerTotal then
         --They have the same score so its a push--
