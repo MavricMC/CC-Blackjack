@@ -773,7 +773,7 @@ function runGame()
     elseif total == dealerTotal then
         --They have the same score so its a push--
         endGame()
-        return true, 0
+        return true, tonumber(text[1])
     else
         error("Cant Calculate Score")
     end
