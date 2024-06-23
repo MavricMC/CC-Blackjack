@@ -1,6 +1,12 @@
 blackjack
 MavricMC/CC-Blackjack/main/game.lua
 startup.lua
+MavricMC/CC-Blackjack/main/.settings
+.settings
+MavricMC/CC-Blackjack/main/readLog.lua
+blackjack/readLog.lua
+MavricMC/CC-Blackjack/main/json.lua
+blackjack/json.lua
 MavricMC/CC-Blackjack/main/cards.lua
 blackjack/cards.lua
 MavricMC/CC-Blackjack/main/logo.nfp
@@ -9,5 +15,3 @@ MavricMC/CC-Blackjack/main/card.nfp
 blackjack/card.nfp
 MavricMC/CC-Blackjack/main/cardBack.nfp
 blackjack/cardBack.nfp
-MavricMC/CC-Blackjack/main/.settings
-.settings
