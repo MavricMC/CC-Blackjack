@@ -1,10 +1,11 @@
----Blackjack version 0.9---
-local version = "0.9"
+---Blackjack version 0.10---
+local version = "0.10"
 
 --Made by Mavric--
 --Code on https://github.com/MavricMC/CC-Blackjack--
 
 os.pullEvent = os.pullEventRaw --Prevent program termination
+os.loadAPI("/blackjack/JSON.lua")
 
 ---Settings---
 local atm = "blackjack_1"
@@ -12,6 +13,8 @@ local bankSide = "top"
 local server = 0
 local screen = "left"
 local drive = "bottom"
+local logFile = "blackjack/log"
+local enableLogging = true
 local background = colors.green
 --Card X cords--
 local xCords = {
@@ -603,10 +606,10 @@ function runGame()
     --If the dealer of player has 21 they win--
     if (dealerTotal == 21) then
         drawCard(xCords[2][2], 5, cards.dealer[2][2], cards.dealer[2][3])
-        return false, tonumber(text[1])
+        return 0, tonumber(text[1]), cards.player, total, card.dealer, dealerTotal, false
     elseif (total == 21) then
-	local winnings = (2 * tonumber(text[1]))
-        return true, winnings
+	    local winnings = (2 * tonumber(text[1]))
+        return 2, winnings, cards.player, total, card.dealer, dealerTotal, false
     end
     
     if (2 * tonumber(text[1])) > betting[4] then
@@ -648,10 +651,10 @@ function runGame()
                         total = total + cards.deck[rand][1]
                         --If they dont go bust they win--
                         if total > 21 then
-                            return false, tonumber(text[1])
+                            return 0, tonumber(text[1]), cards.player, total, card.dealer, dealerTotal, false
                         else
-			    local winnings = (2 * tonumber(text[1]))
-                            return true, winnings
+			                local winnings = (2 * tonumber(text[1]))
+                            return 2, winnings, cards.player, total, card.dealer, dealerTotal, false
                         end
                     else
                         --Check total with new card to see if they go bust--
@@ -659,7 +662,7 @@ function runGame()
                         if total > 21 then
                             --If they go bust they lose--
                             endGame()
-                            return false, tonumber(text[1])
+                            return 0, tonumber(text[1]), cards.player, total, card.dealer, dealerTotal, false
                         end
                     end
                 elseif butt == 3 then
@@ -675,7 +678,7 @@ function runGame()
                                 --If they go bust they lose--
                                 endGame()
                                 local winnings = (2 * tonumber(text[1]))
-                                return false, winnings
+                                return 0, winnings, cards.player, total, card.dealer, dealerTotal, true
                             end
                             
                             --If they dont go bust it exits the loop and their bet is doubled--
@@ -701,6 +704,7 @@ function runGame()
 
     --Keeps getting the dealer another card untill they go bust or their total is more than 16--
     dealerTotal = getTotal(true)
+    total = getTotal(false) --Player total needed for return
     while dealerTotal < 17 do
         local dfull = dealerHit()
         if (dfull) then
@@ -715,10 +719,10 @@ function runGame()
                 if (doubled) then
                     --Doubles the bet if they doubled--
                     local winnings = (4 * tonumber(text[1]))
-                    return true, winnings
+                    return 2, winnings, cards.player, total, card.dealer, dealerTotal, true
                 else
                     local winnings = (2 * tonumber(text[1]))
-                    return true, winnings
+                    return 2, winnings, cards.player, total, card.dealer, dealerTotal, false
                 end
             else
                 --Returns false if the dealer doesn't goes bust--
@@ -726,9 +730,9 @@ function runGame()
                 if (doubled) then
                     --Doubles the bet if they doubled--
                     local winnings = (2 * tonumber(text[1]))
-                    return false, winnings
+                    return 0, winnings, cards.player, total, card.dealer, dealerTotal, true
                 else
-                    return false, tonumber(text[1])
+                    return 0, tonumber(text[1]), cards.player, total, card.dealer, dealerTotal, false
                 end
             end
         else
@@ -741,25 +745,24 @@ function runGame()
                 if (doubled) then
                     --Doubles the bet if they doubled--
                     local winnings = (4 * tonumber(text[1]))
-                    return true, winnings
+                    return 2, winnings, cards.player, total, card.dealer, dealerTotal, true
                 else
                     local winnings = (2 * tonumber(text[1]))
-                    return true, winnings
+                    return 2, winnings, cards.player, total, card.dealer, dealerTotal, false
                 end
             end
         end
     end
 
     --If the player and dealer havent won or gone bust by this point they check totals--
-    total = getTotal(false)
     if dealerTotal > total then
         --Player has less than dealer so they loss--
         endGame()
         if (doubled) then
             local winnings = (2 * tonumber(text[1]))
-            return false, winnings
+            return 0, winnings, cards.player, total, card.dealer, dealerTotal, true
         else
-            return false, tonumber(text[1])
+            return 0, tonumber(text[1]), cards.player, total, card.dealer, dealerTotal, false
         end
     elseif total > dealerTotal then
         --Player has more than dealer so they win--
@@ -767,15 +770,21 @@ function runGame()
         if (doubled) then
             --Doubles the bet if they doubled--
             local winnings = (4 * tonumber(text[1]))
-            return true, winnings
+            return 2, winnings, cards.player, total, card.dealer, dealerTotal, true
         else
             local winnings = (2 * tonumber(text[1]))
-            return true, winnings
+            return 2, winnings, cards.player, total, card.dealer, dealerTotal, false
         end
     elseif total == dealerTotal then
         --They have the same score so its a push--
         endGame()
-        return true, tonumber(text[1])
+        if (doubled) then
+            --Doubles the bet if they doubled--
+            local winnings = (2 * tonumber(text[1]))
+            return 1, winnings, cards.player, total, card.dealer, dealerTotal, true
+        else
+            return 1, tonumber(text[1]), cards.player, total, card.dealer, dealerTotal, false
+        end
     else
         error("Cant Calculate Score")
     end
@@ -783,26 +792,42 @@ end
 
 
 while true do
-    local win, bat = runGame()
+    local win, bat, deck, total, dealerDeck, dealerTotal, double = runGame() --Use added returns for logging. Mabye use json I to scrape with program if to large to read through.    
     term.setBackgroundColor(background)
-    if (win) then
-        term.setCursorPos(12, 30)
+    local logArray = {}
+    term.setCursorPos(21, 30)
+    if (win == 2) then
         term.setTextColor(colors.red)
-        if bat ~= 0 then
-            --Add winnings to their card--
-            local suc, res = deposit(betting[3], bat, atm, text[2])
-            if (suc) then
-                term.write("Deposited your winings of: ".. bat)
-            else
-                term.write("Error: ".. res)
-            end
+        --Add winnings to their card--
+        local suc, res = deposit(betting[3], bat, atm, text[2])
+        if (suc) then
+            term.write("Deposited your winings of: $".. bat)
+            logArray = { date = os.date(), result =  win, bet = bat, pTotal = total, dTotal = dealerTotal, doubled = double }
         else
-            term.write("Push")
+            term.write("Bank error: ".. res)
+            logArray = { date = os.date(), result =  3, bet = bat, bankMsg = res, pTotal = total, dTotal = dealerTotal, doubled = double }
+        end
+    elseif (win == 1) then
+        term.setTextColor(colors.red)
+        --Return bet to their card--
+        local suc, res = deposit(betting[3], bat, atm, text[2])
+        if (suc) then
+            term.write("Returned: $".. bat)
+            logArray = { date = os.date(), result =  win, bet = bat, pTotal = total, dTotal = dealerTotal, doubled = double }
+        else
+            term.write("Bank error: ".. res)
+            logArray = { date = os.date(), result =  4, bet = bat, bankMsg = res, pTotal = total, dTotal = dealerTotal, doubled = double }
         end
     else
-        term.setCursorPos(21, 30)
         term.setTextColor(colors.black)
-        term.write("You Lost")
+        term.write("You Lost: $".. bat)
+        logArray = { date = os.date(), result =  win, bet = bat, pTotal = total, dTotal = dealerTotal, doubled = double }
+    end
+    if (enableLogging) then
+        local logLine = JSON.encode(logArray)
+        local log = fs.open(logFile, "a")
+        log.writeLine(logLine)
+        log.close()
     end
     sleep(3)
 end
