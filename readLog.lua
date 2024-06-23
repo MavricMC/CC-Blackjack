@@ -1,4 +1,4 @@
----Blackjack version 0.10---
+---Blackjack version 1.0---
 local logFile = "blackjack/log"
 os.loadAPI("/blackjack/json.lua")
 
