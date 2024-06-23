@@ -5,8 +5,6 @@ local version = "0.9"
 --Code on https://github.com/MavricMC/CC-Blackjack--
 
 os.pullEvent = os.pullEventRaw --Prevent program termination
-settings.set("shell.allow_disk_startup", false)
-settings.save()
 
 ---Settings---
 local atm = "blackjack_1"
