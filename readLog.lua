@@ -1,4 +1,5 @@
 local logFile = "blackjack/log"
+os.loadAPI("/blackjack/json.lua")
 
 term.clear()
 term.setCursorPos(1, 1)
@@ -24,7 +25,7 @@ else
     end
     local line = log.readLine()
     while line ~= nil do
-        logContents[num - start + 1] = JSON.decode(line)
+        logContents[num - start + 1] = json.decode(line)
         num = num + 1
         line = log.readLine()
     end
