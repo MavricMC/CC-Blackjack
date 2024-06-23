@@ -9,3 +9,5 @@ MavricMC/CC-Blackjack/main/card.nfp
 blackjack/card.nfp
 MavricMC/CC-Blackjack/main/cardBack.nfp
 blackjack/cardBack.nfp
+MavricMC/CC-Blackjack/main/.settings
+.settings
