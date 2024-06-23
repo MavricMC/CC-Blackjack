@@ -5,7 +5,7 @@ local version = "0.10"
 --Code on https://github.com/MavricMC/CC-Blackjack--
 
 os.pullEvent = os.pullEventRaw --Prevent program termination
-os.loadAPI("/blackjack/JSON.lua")
+os.loadAPI("/blackjack/json.lua")
 
 ---Settings---
 local atm = "blackjack_1"
@@ -792,7 +792,7 @@ end
 
 
 while true do
-    local win, bat, deck, total, dealerDeck, dealerTotal, double = runGame() --Use added returns for logging. Mabye use json I to scrape with program if to large to read through.    
+    local win, bat, deck, total, dealerDeck, dealerTotal, double = runGame()
     term.setBackgroundColor(background)
     local logArray = {}
     term.setCursorPos(21, 30)
@@ -824,7 +824,7 @@ while true do
         logArray = { date = os.date(), result =  win, bet = bat, pTotal = total, dTotal = dealerTotal, doubled = double }
     end
     if (enableLogging) then
-        local logLine = JSON.encode(logArray)
+        local logLine = json.encode(logArray)
         local log = fs.open(logFile, "a")
         log.writeLine(logLine)
         log.close()
