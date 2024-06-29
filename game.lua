@@ -1,5 +1,5 @@
 ---Blackjack version 1.0---
-local version = "0.10"
+local version = "1.0"
 
 --Made by Mavric--
 --Code on https://github.com/MavricMC/CC-Blackjack--
