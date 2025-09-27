@@ -25,22 +25,6 @@ local xCords = {
     {6, 14, 22, 30, 38},
     {3, 11, 19, 27, 35, 43}
 }
---Pinpad Button info--
-local pinpad = {
---{number, xPos, yPos}--
-    {"1", 20, 20},
-    {"2", 25, 20},
-    {"3", 30, 20},
-    {"4", 20, 22},
-    {"5", 25, 22},
-    {"6", 30, 22},
-    {"7", 20, 24},
-    {"8", 25, 24},
-    {"9", 30, 24},
-    {"0", 25, 26},
-    {"10", 20, 26}, --clear
-    {"11", 30, 26}  --enter
-}
 --Game Buttons--
 local buttons = {
 --{text, xWritePos, color, x cord each side of the button}--
@@ -226,13 +210,17 @@ function drawX()
 end
 
 function pinpad(key)
-    if (tonumber(key)) then
-        if key == 259 then
-            return true, 10
-        elseif key == 257 or key == 335 then
-            return true, 11
-        elseif tonumber(key) >= 0 and tonumber(key) <= 9 then
-            return true, tonumber(key)
+    if (key == ".") then
+        return true, 10
+    else
+        if (tonumber(key)) then
+            if tonumber(key) == 259 then
+                return true, 10
+            elseif (tonumber(key) == 257 or tonumber(key) == 335) then
+                return true, 11
+            elseif tonumber(key) >= 0 and tonumber(key) <= 9 then
+                return true, tonumber(key)
+            end
         end
     end
     return false
